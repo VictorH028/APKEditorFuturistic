@@ -1,11 +1,18 @@
 <details><summary> 👈 <code><i> Click arrows to expand/collapse details on this page </i></code></summary></details>
 
+<<<<<<< HEAD
 # APKEditor
 ### Powerful android apk resources editor
 This tool uses [ARSCLib](https://github.com/REAndroid/ARSCLib) to edit any apk resources and has six main features
+=======
+<p align="center">
+  <b>⭐ APKEditor Futuristic interfaz ⭐</b>
+</p>
+>>>>>>> 1b17e89 (UI)
 
 <details><summary><code>java -jar APKEditor.jar <b>-h</b></code></summary>
 
+<<<<<<< HEAD
 ```ShellSession
 $ java -jar APKEditor.jar -h
 APKEditor - x.x.x
@@ -62,6 +69,29 @@ $ java -jar APKEditor.jar d -i test.apk -o test_json
 12.643 I: [DECOMPILE] Extracting root files ...
 12.766 I: [DECOMPILE] Dumping signatures ...
 12.766 I: [DECOMPILE] Saved to: test_json
+=======
+APKEditor Futuristic es una interfaz gráfica moderna  que envuelve el motor original de APKEditor.
+
+
+## Objetivo final 
+
+![ui_last](./.img/ui_last.png) 
+
+> [!WARNING]
+> Aunque exista la IA y sea buena jenerando codigo esto lo estoy haciendo para mejorar mis avilidades como programador y fortaleser mi conocimiento. (Solo un reto mas xD)
+
+> [!NOTE]
+> Todo lo tratare de documentar. Como todas mis ideas y esto estara en  `/docs/`
+
+**Revisa siempre de primero**
+
+- [apkeditor-ui](url) 
+
+## Compilasion 
+
+```bash
+gradle  fatJar
+>>>>>>> 1b17e89 (UI)
 ```
 <details> <summary><code>more info</code></summary>
 
