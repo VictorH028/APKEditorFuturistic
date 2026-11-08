@@ -1,63 +1,39 @@
 ![UI](./.img/ui.jpg)
 
 <p align="center">
-  <b>APKEditor Futuristic - Interfaz</b>
+  <a href="./README.md">Español</a> | <a href="./README.en.md">English</a>
 </p>
 
-## Descripción
+<p align="center">
+  <b>APKEditor Futuristic - Interface</b>
+</p>
 
-APKEditor Futuristic es una interfaz gráfica moderna que envuelve el motor original de APKEditor.
+## Description
 
-## Documentación
+APKEditor Futuristic is a modern graphical interface that wraps the original [APKEditor]() engine.
 
-La documentación completa de la interfaz, la arquitectura, la ejecución y la solución de problemas está en:
-
-- [docs/apkeditor-ui.md](docs/apkeditor-ui.md)
-
-## Objetivo final
+## Final goal
 
 ![ui_last](./.img/ui_last.png)
 
 > [!WARNING]
-> Todo esta impulsado por IA puede terner cambios radicales 
+> Work in progress.
 
-> [!NOTE]
-> Todo lo trataré de documentar. Todas mis ideas y el progreso estarán en `/docs/`.
+## Build
 
-## Requisitos
-
-- JDK 21.
-- Gradle Wrapper incluido en el repositorio.
-- Los archivos de `libs/`: `ARSCLib.jar`, `smali.jar` y `JCommand.jar`.
-- Un servidor gráfico X11:
-  - Linux de escritorio: Xorg/Wayland con XWayland.
-  - Termux: VNC (`Xvnc`) o `Termux:X11`.
-
-## Compilación
-
-```bash
-sh gradlew compileJava --offline
-```
-
-Compilación completa sin pruebas:
-
-```bash
-sh gradlew build -x test --offline
-```
-
-Jar ejecutable de la interfaz gráfica:
+Executable GUI jar:
 
 ```bash
 sh gradlew guiFatJar --offline
 ```
 
-El jar de la GUI se genera en:
+The GUI jar is generated at:
 
 ```text
 build/libs/APKEditor-1.4.9-gui.jar
 ```
 
-También existe el fat jar general (CLI + GUI):
+A general fat jar is also available (CLI + GUI):
 
 ```bash
 sh gradlew fatJar --offline
@@ -67,11 +43,11 @@ sh gradlew fatJar --offline
 build/libs/APKEditor-1.4.9-all.jar
 ```
 
-> Usa `sh gradlew` si `./gradlew` falla con `permission denied`.
+> Use `sh gradlew` if `./gradlew` fails with `permission denied`.
 
-## Iniciar la interfaz gráfica
+## Launch the graphical interface
 
-### Opción 1 - Classpath de desarrollo
+### Option 1 - Development classpath
 
 ```bash
 sh gradlew compileJava --offline
@@ -80,7 +56,7 @@ java -cp 'build/classes/java/main:build/resources/main:libs/*' \
   com.reandroid.apkeditor.gui.GUIApplication
 ```
 
-### Opción 2 - Jar de la GUI
+### Option 2 - GUI jar
 
 ```bash
 sh gradlew guiFatJar --offline
@@ -88,7 +64,7 @@ sh gradlew guiFatJar --offline
 java -jar build/libs/APKEditor-1.4.9-gui.jar
 ```
 
-### Termux con VNC
+### Termux with VNC
 
 ```bash
 cd /data/data/com.termux/files/home/proyecto/APKEditor
@@ -100,29 +76,18 @@ java -cp 'build/classes/java/main:build/resources/main:libs/*' \
   com.reandroid.apkeditor.gui.GUIApplication
 ```
 
-Después abre el visor VNC en `localhost:5900` o en el puerto configurado.
+Then open the VNC viewer at `localhost:5900` or the configured port.
 
-### Termux con Termux:X11
+## Quick start
 
-```bash
-export DISPLAY=:0
-termux-x11 :0 &
-```
+1. Open the GUI.
+2. Click the APK selector or press `Ctrl+O`.
+3. Choose an APK/ZIP file.
+4. Browse the tree, open files in the editor, and check the logs.
+5. Press `F5` or click **Decompile** to generate the project.
+6. Use the **Build**, **Merge**, **Refactor**, and **Protect** views to run the engine operations.
+7. Switch between Spanish and English from the top bar or **Settings**.
 
-Abre la aplicación Termux:X11 y ejecuta el comando Java de la GUI.
+## Status
 
-> Importante: `sh gradlew run` ejecuta el CLI (`com.reandroid.apkeditor.Main`), no la interfaz gráfica. Usa `guiFatJar` y `java -jar build/libs/APKEditor-1.4.9-gui.jar` para abrir la GUI.
-
-## Uso rápido
-
-1. Abre la GUI.
-2. Pulsa el selector de APK o usa `Ctrl+O`.
-3. Elige un archivo APK/ZIP.
-4. Explora el árbol, abre archivos en el editor y revisa los logs.
-5. Usa `F5` o el botón **Descompilar** para generar el proyecto.
-6. Usa las vistas **Construir**, **Fusionar**, **Refactorizar** y **Proteger** para ejecutar las operaciones del motor.
-7. Cambia el idioma español/inglés desde la topbar o desde **Configuración**.
-
-## Estado
-
-La interfaz actual está implementada con Swing + Java2D. Incluye temas en caliente y cambio de idioma español/inglés. El detalle de módulos, atajos, temas, idioma, operaciones y limitaciones está en [docs/apkeditor-ui.md](docs/apkeditor-ui.md).
+The current interface is implemented with Swing + Java2D. It includes live theme switching and Spanish/English language switching. Details about modules, shortcuts, themes, language, operations, and limitations are available in [docs/apkeditor-ui.en.md](docs/apkeditor-ui.en.md).

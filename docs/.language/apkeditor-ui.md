@@ -1,8 +1,12 @@
 # APKEDITOR UI
 
+<p>
+  <a href="./apkeditor-ui.md">Español</a> | <a href="./apkeditor-ui.en.md">English</a>
+</p>
+
 Documentación de la interfaz gráfica de APKEditor.
 
-> Estado actual: interfaz implementada en **Swing + Java2D**. La idea inicial de migrar a JavaFX quedó descartada porque el proyecto ya funciona con Swing en Termux/aarch64 y la interfaz actual cubre el flujo principal.
+> Estado actual: interfaz implementada en **Swing + Java2D**.
 
 ## 1. Resumen
 
@@ -527,9 +531,8 @@ Pendiente o limitado:
 ## 16. Referencias
 
 - [README del proyecto](../README.md)
-- [Especificación visual](../deseño.json)
 - [Referencia visual](../.img/ui_last.png)
-- [Repositorio APKEditor](https://github.com/VictorH028/APKEditor)
+- [Repositorio APKEditor](https://github.com/REAndroid/APKEditor)
 - `build.gradle`: dependencias, versión y tareas `fatJar` / `guiFatJar`
 - `src/main/java/com/reandroid/apkeditor/gui/`: implementación de la interfaz
 - `src/main/java/com/reandroid/apkeditor/core/`: contratos del motor
