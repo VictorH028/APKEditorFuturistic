@@ -1,7 +1,5 @@
-![UI](./.img/ui.jpg)
-
 <p align="center">
-  <a href="./README.md">Español</a> | <a href="./README.en.md">English</a>
+  <a href="./README.es.md">Español</a> | <a href="~/README.md">English</a>
 </p>
 
 <p align="center">
@@ -14,7 +12,7 @@ APKEditor Futuristic es una interfaz gráfica moderna que envuelve el motor orig
 
 ## Objetivo final
 
-![ui_last](./.img/ui_last.png)
+![ui_last](~/.img/ui_last.png)
 
 > [!WARNING]
 > En desarrollo.

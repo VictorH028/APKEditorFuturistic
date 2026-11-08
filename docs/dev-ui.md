@@ -1,7 +1,7 @@
 # APKEDITOR UI
 
 <p>
-  <a href="./apkeditor-ui.md">Español</a> | <a href="./apkeditor-ui.en.md">English</a>
+  <a href="./.language/dev-ui.es.md">Español</a> | <a href="./dev-ui.md">English</a>
 </p>
 
 Documentation for the APKEditor graphical interface.
