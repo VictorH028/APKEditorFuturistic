@@ -1,16 +1,15 @@
-![UI](./.img/ui.jpg)
-
-<p align="center">
-  <a href="./README.md">Español</a> | <a href="./README.en.md">English</a>
-</p>
-
 <p align="center">
   <b>APKEditor Futuristic - Interface</b>
 </p>
 
+<p align="center">
+  <a href="./docs/.language/README.es.md">Español</a> | <a href="./README.md">English</a>
+</p>
+
+
 ## Description
 
-APKEditor Futuristic is a modern graphical interface that wraps the original [APKEditor]() engine.
+APKEditor Futuristic is a modern graphical interface that wraps the original [APKEditor](https://github.com/REAndroid/APKEditor) engine.
 
 ## Final goal
 
@@ -90,4 +89,4 @@ Then open the VNC viewer at `localhost:5900` or the configured port.
 
 ## Status
 
-The current interface is implemented with Swing + Java2D. It includes live theme switching and Spanish/English language switching. Details about modules, shortcuts, themes, language, operations, and limitations are available in [docs/apkeditor-ui.en.md](docs/apkeditor-ui.en.md).
+The current interface is implemented with Swing + Java2D. It includes live theme switching and Spanish/English language switching. Details about modules, shortcuts, themes, language, operations, and limitations are available in [dev-ui](./docs/dev-ui.md).
