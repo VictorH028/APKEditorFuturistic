@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="./README.es.md">Español</a> | <a href="~/README.md">English</a>
+  <a href="./README.es.md">Español</a> | <a href="https://github.com/VictorH028/APKEditorFuturistic/blob/master/README.md">English</a>
 </p>
 
 <p align="center">
@@ -8,11 +8,11 @@
 
 ## Descripción
 
-APKEditor Futuristic es una interfaz gráfica moderna que envuelve el motor original de [APKEditor]().
+APKEditor Futuristic es una interfaz gráfica moderna que envuelve el motor original de [APKEditor](https://github.com/REAndroid/APKEditor).
 
 ## Objetivo final
 
-![ui_last](~/.img/ui_last.png)
+![ui_last](https://github.com/VictorH028/APKEditorFuturistic/blob/master/.img/ui_last.png)
 
 > [!WARNING]
 > En desarrollo.
