@@ -16,6 +16,21 @@ java {
     targetCompatibility = JavaVersion.VERSION_21
 }
 
+// JavaFX se descarga como dependencia de Maven Central. El artefacto lleva
+// un classifier por plataforma (linux, linux-aarch64, win, mac, mac-aarch64).
+def javafxVersion = '21.0.13'
+def osName = System.getProperty('os.name', '').toLowerCase()
+def osArch = System.getProperty('os.arch', '').toLowerCase()
+def javafxPlatform = osName.contains('win')
+        ? 'win'
+        : osName.contains('mac')
+        ? (osArch.contains('aarch64') ? 'mac-aarch64' : 'mac')
+        : (osArch.contains('aarch64') ? 'linux-aarch64' : 'linux')
+
+configurations {
+    javafx
+}
+
 repositories {
     mavenCentral()
 }
@@ -24,7 +39,21 @@ dependencies {
     implementation(files("$rootProject.projectDir/libs/ARSCLib.jar"))
     implementation(files("$rootProject.projectDir/libs/smali.jar"))
     implementation(files("$rootProject.projectDir/libs/JCommand.jar"))
+    javafx("org.openjfx:javafx-base:${javafxVersion}:${javafxPlatform}") { transitive = false }
+    javafx("org.openjfx:javafx-graphics:${javafxVersion}:${javafxPlatform}") { transitive = false }
+    javafx("org.openjfx:javafx-controls:${javafxVersion}:${javafxPlatform}") { transitive = false }
 }
+
+// La interfaz JavaFX vive en un source set separado para que el CLI no
+// dependa de las dependencias de JavaFX.
+sourceSets {
+    javafx {
+        // Las rutas por defecto son src/javafx/java y src/javafx/resources.
+        compileClasspath += sourceSets.main.output
+    }
+}
+
+sourceSets.javafx.compileClasspath += configurations.javafx
 
 processResources {
     filesMatching('apkeditor.properties') {
@@ -44,7 +73,7 @@ jar {
     }
 }
 
-// Configuración de FatJar compatible con Gradle 8.x
+// Fat jar del CLI (incluye el motor y las clases compartidas).
 task fatJar(type: Jar) {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveClassifier = 'all'
@@ -59,17 +88,60 @@ task fatJar(type: Jar) {
     with jar
 }
 
+// Copia los jars modulares descargados a build/javafx para poder ejecutar el
+// jar de la GUI sin depender de un SDK local.
+tasks.register('javafxRuntime', Sync) {
+    group = 'application'
+    description = 'Copia el runtime de JavaFX descargado a build/javafx'
+    from configurations.javafx
+    into layout.buildDirectory.dir('javafx')
+}
+
 task guiFatJar(type: Jar) {
+    dependsOn tasks.named('javafxClasses')
+    dependsOn tasks.named('javafxRuntime')
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
     archiveClassifier = 'gui'
 
     manifest {
-        attributes 'Main-Class': 'com.reandroid.apkeditor.gui.GUIApplication'
+        attributes 'Main-Class': 'com.reandroid.apkeditor.javafx.JavaFXApplication'
     }
 
+    // La app JavaFX y las clases compartidas; el runtime descargado se copia a
+    // build/javafx y se aporta con --module-path al ejecutar el jar.
+    from sourceSets.javafx.output
     from sourceSets.main.output
     from {
         configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
     }
+}
+
+// Tareas de la interfaz JavaFX nativa. El runtime se carga por module-path.
+def configurarJavaFxExec = { JavaExec task ->
+    task.dependsOn tasks.named('javafxClasses')
+    task.classpath = files(sourceSets.javafx.output, sourceSets.main.runtimeClasspath)
+    task.mainClass = 'com.reandroid.apkeditor.javafx.JavaFXApplication'
+    task.jvmArgs = [
+        '--module-path', configurations.javafx.asPath,
+        '--add-modules', 'javafx.controls'
+    ]
+}
+
+tasks.register('javafxRun', JavaExec) {
+    group = 'application'
+    description = 'Ejecuta la interfaz JavaFX nativa (requiere un display)'
+    configurarJavaFxExec(it)
+}
+
+tasks.register('javafxSmoke', JavaExec) {
+    group = 'verification'
+    description = 'Prueba de humo de JavaFX; cierra sola al cargar'
+    args '--smoke-test'
+    configurarJavaFxExec(it)
+    jvmArgs = [
+        '-Dprism.order=sw',
+        '--module-path', configurations.javafx.asPath,
+        '--add-modules', 'javafx.controls'
+    ]
 }
 

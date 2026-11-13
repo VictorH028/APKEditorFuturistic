@@ -1,4 +1,4 @@
-name: Build GUI Jar
+name: Build JavaFX GUI Jar
 
 on:
   push:
@@ -25,15 +25,28 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v4
 
-      - name: Build GUI fat jar
+      - name: Build JavaFX GUI jar
         run: |
           chmod +x gradlew
           ./gradlew clean guiFatJar --no-daemon
-          ls -lh build/libs
+          ls -lh build/libs build/javafx
 
-      - name: Upload GUI jar
+      - name: Install Xvfb
+        run: sudo apt-get update && sudo apt-get install -y xvfb
+
+      - name: JavaFX smoke test
+        run: xvfb-run -a ./gradlew javafxSmoke --no-daemon
+
+      - name: Package GUI artifact
+        run: |
+          mkdir -p dist/gui/javafx
+          cp build/libs/*-gui.jar dist/gui/
+          cp build/javafx/*.jar dist/gui/javafx/
+          ls -lh dist/gui dist/gui/javafx
+
+      - name: Upload GUI artifact
         uses: actions/upload-artifact@v4
         with:
           name: APKEDITOR-GUI
-          path: build/libs/*-gui.jar
+          path: dist/gui
           if-no-files-found: error

@@ -3,3 +3,8 @@
 /.gradle/
 /build/
 /.github/
+
+# JavaFX/proot local test artifacts
+/debian-trixie/
+hs_err_pid*.log
+/core.*

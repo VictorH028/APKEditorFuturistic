@@ -8,7 +8,7 @@ import java.util.regex.Pattern;
 /**
  * Paletas de la interfaz JavaFX. La hoja de estilos es una plantilla con
  * tokens -fx-apx-* que se sustituyen por colores concretos en cada tema.
- * Los valores coinciden con los temas de la interfaz Swing.
+ * Cada paleta define la identidad visual de un tema.
  */
 public final class FxTheme {
     private FxTheme() {}
