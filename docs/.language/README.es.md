@@ -1,37 +1,63 @@
 <p align="center">
+<<<<<<< HEAD
   <a href="./README.es.md">Español</a> | <a href="https://github.com/VictorH028/APKEditorFuturistic/blob/master/README.md">English</a>
 </p>
 
 <p align="center">
+=======
+>>>>>>> job-work
   <b>APKEditor Futuristic - Interfaz</b>
 </p>
 
+<p align="center">
+  <a href="./docs/.language/README.es.md">Español</a> | <a href="./README.md">English</a>
+</p>
+
+
 ## Descripción
 
+<<<<<<< HEAD
 APKEditor Futuristic es una interfaz gráfica moderna que envuelve el motor original de [APKEditor](https://github.com/REAndroid/APKEditor).
 
 ## Objetivo final
 
 ![ui_last](https://github.com/VictorH028/APKEditorFuturistic/blob/master/.img/ui_last.png)
+=======
+APKEditor Futuristic es una interfaz nativa JavaFX para el motor original
+[APKEditor](https://github.com/REAndroid/APKEditor). La interfaz reutiliza el
+motor y sus operaciones; ya no incluye una UI Swing.
+
+## Objetivo final
+
+![ui_last](../../.img/ui_last.png)
+>>>>>>> job-work
 
 > [!WARNING]
-> En desarrollo.
+> Trabajo en progreso.
 
 ## Compilación
 
-Jar ejecutable de la interfaz gráfica:
+Jar de la interfaz JavaFX (Gradle descarga OpenJFX 21.0.13 en la primera compilación):
 
 ```bash
-sh gradlew guiFatJar --offline
+sh gradlew guiFatJar
 ```
 
-El jar de la GUI se genera en:
+El jar se genera en:
 
 ```text
 build/libs/APKEditor-1.4.9-gui.jar
 ```
 
-También existe el fat jar general (CLI + GUI):
+Incluye la app JavaFX y las clases compartidas/del motor, pero no el runtime de
+JavaFX: `guiFatJar` copia los módulos descargados a `build/javafx`. Ejecútalo con:
+
+```bash
+java --module-path build/javafx --add-modules javafx.controls \
+  -jar build/libs/APKEditor-1.4.9-gui.jar
+```
+
+Fat jar solo para el CLI:
 
 ```bash
 sh gradlew fatJar --offline
@@ -43,49 +69,58 @@ build/libs/APKEditor-1.4.9-all.jar
 
 > Usa `sh gradlew` si `./gradlew` falla con `permission denied`.
 
-## Iniciar la interfaz gráfica
+## Ejecutar la interfaz gráfica
 
-### Opción 1 - Classpath de desarrollo
-
-```bash
-sh gradlew compileJava --offline
-
-java -cp 'build/classes/java/main:build/resources/main:libs/*' \
-  com.reandroid.apkeditor.gui.GUIApplication
-```
-
-### Opción 2 - Jar de la GUI
+### Ejecución de desarrollo
 
 ```bash
-sh gradlew guiFatJar --offline
-
-java -jar build/libs/APKEditor-1.4.9-gui.jar
+sh gradlew javafxRun
 ```
 
-### Termux con VNC
+### Prueba de humo
 
 ```bash
-cd /data/data/com.termux/files/home/proyecto/APKEditor
-
-export DISPLAY=:0
-export XAUTHORITY="$HOME/.Xauthority"
-
-java -cp 'build/classes/java/main:build/resources/main:libs/*' \
-  com.reandroid.apkeditor.gui.GUIApplication
+sh gradlew javafxSmoke
 ```
 
-Después abre el visor VNC en `localhost:5900` o en el puerto configurado.
+La primera compilación de JavaFX necesita red para descargar los artefactos de
+Maven; después puedes usar `--offline` cuando estén en caché.
 
-## Uso rápido
+## Termux (proot)
 
-1. Abre la GUI.
-2. Pulsa el selector de APK o usa `Ctrl+O`.
-3. Elige un archivo APK/ZIP.
-4. Explora el árbol, abre archivos en el editor y revisa los logs.
-5. Usa `F5` o el botón **Descompilar** para generar el proyecto.
-6. Usa las vistas **Construir**, **Fusionar**, **Refactorizar** y **Proteger** para ejecutar las operaciones del motor.
-7. Cambia el idioma español/inglés desde la topbar o desde **Configuración**.
+Los binarios de OpenJFX están enlazados contra glibc. En Termux, ejecuta la app
+dentro del entorno Debian `proot`:
+
+```bash
+bash proot-run.sh
+bash proot-run.sh --smoke-test
+```
+
+`proot-run.sh` usa `~/javaFX/debian-trixie` como rootfs de Debian, ejecuta Gradle
+para descargar JavaFX y copiarlo a `build/javafx`, y arranca Xvfb salvo
+`START_XVFB=0`. Puedes sobrescribir con `JFX_BASE`, `ROOTFS`, `DISPLAY_NUM` o
+`SKIP_BUILD=1`.
+
+Para un display VNC/Termux:X11 existente:
+
+```bash
+START_XVFB=0 DISPLAY_NUM=:0 bash proot-run.sh
+```
+
+## Inicio rápido
+
+1. Abre la interfaz.
+2. Pulsa el selector de APK o `Ctrl+O`.
+3. Elige un APK/ZIP.
+4. Explora el árbol, abre archivos en el editor y revisa el log.
+5. Pulsa `F5` o **Descompilar** para generar el proyecto.
+6. Usa **Construir**, **Fusionar**, **Refactorizar** y **Proteger** para ejecutar las operaciones del motor.
+7. Cambia entre español e inglés desde la barra superior o **Configuración**.
 
 ## Estado
 
-La interfaz actual está implementada con Swing + Java2D. Incluye temas en caliente y cambio de idioma español/inglés. El detalle de módulos, atajos, temas, idioma, operaciones y limitaciones está en [docs/apkeditor-ui.md](docs/apkeditor-ui.md).
+La única interfaz gráfica es la UI nativa JavaFX. Incluye cambio de tema en
+caliente, idioma español/inglés, iconos SVG, editor con números de línea, log en
+vivo, progreso y el mismo catálogo de operaciones del motor. El detalle de
+rutas, temas, atajos y limitaciones está en
+[dev-ui](./docs/.language/dev-ui.es.md).

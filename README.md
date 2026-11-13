@@ -9,7 +9,7 @@
 
 ## Description
 
-APKEditor Futuristic is a modern graphical interface that wraps the original [APKEditor](https://github.com/REAndroid/APKEditor) engine.
+APKEditor Futuristic is a native JavaFX interface for the original [APKEditor](https://github.com/REAndroid/APKEditor) engine. The interface reuses the engine and its operations, but no longer ships a Swing UI.
 
 ## Final goal
 
@@ -20,10 +20,10 @@ APKEditor Futuristic is a modern graphical interface that wraps the original [AP
 
 ## Build
 
-Executable GUI jar:
+Native JavaFX GUI jar (Gradle downloads OpenJFX 21.0.13 on the first build):
 
 ```bash
-sh gradlew guiFatJar --offline
+sh gradlew guiFatJar
 ```
 
 The GUI jar is generated at:
@@ -32,7 +32,16 @@ The GUI jar is generated at:
 build/libs/APKEditor-1.4.9-gui.jar
 ```
 
-A general fat jar is also available (CLI + GUI):
+It includes the JavaFX app and the shared/engine classes, but not the JavaFX
+runtime: `guiFatJar` copies the downloaded modules to `build/javafx`. Launch it
+with:
+
+```bash
+java --module-path build/javafx --add-modules javafx.controls \
+  -jar build/libs/APKEditor-1.4.9-gui.jar
+```
+
+CLI-only fat jar:
 
 ```bash
 sh gradlew fatJar --offline
@@ -46,36 +55,41 @@ build/libs/APKEditor-1.4.9-all.jar
 
 ## Launch the graphical interface
 
-### Option 1 - Development classpath
+### Development run
 
 ```bash
-sh gradlew compileJava --offline
-
-java -cp 'build/classes/java/main:build/resources/main:libs/*' \
-  com.reandroid.apkeditor.gui.GUIApplication
+sh gradlew javafxRun
 ```
 
-### Option 2 - GUI jar
+### Smoke test
 
 ```bash
-sh gradlew guiFatJar --offline
-
-java -jar build/libs/APKEditor-1.4.9-gui.jar
+sh gradlew javafxSmoke
 ```
 
-### Termux with VNC
+The first JavaFX build needs network to download the Maven artifacts; later
+builds can use `--offline` once they are cached.
+
+## Termux (proot)
+
+The OpenJFX binaries are linked against glibc. On Termux, run the app inside the
+Debian `proot` environment:
 
 ```bash
-cd /data/data/com.termux/files/home/proyecto/APKEditor
-
-export DISPLAY=:0
-export XAUTHORITY="$HOME/.Xauthority"
-
-java -cp 'build/classes/java/main:build/resources/main:libs/*' \
-  com.reandroid.apkeditor.gui.GUIApplication
+bash proot-run.sh
+bash proot-run.sh --smoke-test
 ```
 
-Then open the VNC viewer at `localhost:5900` or the configured port.
+`proot-run.sh` uses `~/javaFX/debian-trixie` as the Debian rootfs, runs Gradle to
+download JavaFX and copy it to `build/javafx`, and starts Xvfb unless
+`START_XVFB=0`. Override with `JFX_BASE`, `ROOTFS`, `DISPLAY_NUM`, or
+`SKIP_BUILD=1`.
+
+For an existing VNC/Termux:X11 display:
+
+```bash
+START_XVFB=0 DISPLAY_NUM=:0 bash proot-run.sh
+```
 
 ## Quick start
 
@@ -89,4 +103,8 @@ Then open the VNC viewer at `localhost:5900` or the configured port.
 
 ## Status
 
-The current interface is implemented with Swing + Java2D. It includes live theme switching and Spanish/English language switching. Details about modules, shortcuts, themes, language, operations, and limitations are available in [dev-ui](./docs/dev-ui.md).
+The only graphical interface is the native JavaFX UI. It includes live theme
+switching, Spanish/English language switching, SVG icons, a code editor with
+line numbers, live logs, progress, and the same operation catalog as the engine.
+Details about routes, themes, shortcuts, and limitations are available in
+[dev-ui](./docs/dev-ui.md).

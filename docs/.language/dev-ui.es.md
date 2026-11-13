@@ -1,12 +1,16 @@
 # APKEDITOR UI
 
 <p>
+<<<<<<< HEAD
   <a href="./apkeditor-ui.md">Español</a> | <a href="https://github.com/VictorH028/APKEditorFuturistic/blob/master/docs/dev-ui.md">English</a>
+=======
+  <a href="../dev-ui.md">English</a> | <a href="./dev-ui.es.md">Español</a>
+>>>>>>> job-work
 </p>
 
 Documentación de la interfaz gráfica de APKEditor.
 
-> Estado actual: interfaz implementada en **Swing + Java2D**.
+> Estado actual: la interfaz gráfica es **JavaFX nativa** (`src/javafx`). La antigua UI Swing/Java2D fue eliminada. El CLI y el modelo/servicios compartidos permanecen en `src/main`.
 
 ## 1. Resumen
 
@@ -19,20 +23,22 @@ APKEDITOR UI es una interfaz de escritorio para:
 - Ejecutar las operaciones existentes del motor: decodificar, construir, fusionar, refactorizar y proteger.
 - Consultar logs, progreso y estadísticas del APK.
 
-La interfaz no reimplementa el motor. Las vistas sólo preparan los datos y `OperationService` ejecuta las operaciones registradas en `OperationCatalog`.
+La interfaz no reimplementa el motor. Las vistas sólo preparan los datos y
+`gui/service/OperationService` ejecuta las operaciones registradas en
+`operations/OperationCatalog`.
 
 ## 2. Requisitos
 
 - **JDK 21**.
 - Gradle Wrapper incluido en el repositorio (`gradlew`).
+- Acceso a red en la primera compilación: Gradle descarga OpenJFX 21.0.13 desde Maven Central.
 - Los archivos de `libs/`:
   - `ARSCLib.jar`
   - `smali.jar`
   - `JCommand.jar`
 - Un servidor gráfico X11:
   - En escritorio Linux: Xorg/Wayland con XWayland.
-  - En Termux: VNC (`Xvnc`) o `Termux:X11`.
-- Para VNC, un visor VNC conectado al puerto correspondiente.
+  - En Termux: VNC (`Xvnc`) o `Termux:X11`, o el Xvfb que arranca `proot-run.sh`.
 
 No hace falta instalar Android SDK para ejecutar la interfaz.
 
@@ -42,21 +48,25 @@ Desde la raíz del proyecto:
 
 ```bash
 sh gradlew compileJava --offline
+sh gradlew javafxClasses
 ```
 
-Compilación completa sin pruebas:
+Build completo sin tests:
 
 ```bash
 sh gradlew build -x test --offline
 ```
 
-Jar ejecutable de la GUI con dependencias:
+Jar ejecutable de la interfaz JavaFX (Gradle descarga OpenJFX en la primera compilación):
 
 ```bash
-sh gradlew guiFatJar --offline
+sh gradlew guiFatJar
 ```
 
-Fat jar general (CLI + GUI):
+Tras la primera resolución, puedes añadir `--offline` para reutilizar los
+artefactos de Maven en caché.
+
+Fat jar sólo para el CLI:
 
 ```bash
 sh gradlew fatJar --offline
@@ -65,475 +75,260 @@ sh gradlew fatJar --offline
 Artefactos generados:
 
 ```text
-build/classes/java/main/                  clases compiladas
-build/resources/main/                     recursos
-build/libs/APKEditor-1.4.9.jar            jar normal
-build/libs/APKEditor-1.4.9-all.jar        fat jar general
-build/libs/APKEditor-1.4.9-gui.jar        jar ejecutable de la GUI
+build/classes/java/main/                  clases CLI + compartidas
+build/classes/java/javafx/                clases de la UI JavaFX
+build/resources/main/                     recursos compartidos
+build/resources/javafx/                   styles/app.css
+build/javafx/                             módulos de JavaFX descargados
+build/libs/APKEditor-1.4.9.jar            jar regular (CLI)
+build/libs/APKEditor-1.4.9-all.jar        fat jar del CLI
+build/libs/APKEditor-1.4.9-gui.jar        jar de la GUI JavaFX
 ```
 
 > Usa `sh gradlew` si `./gradlew` falla con `permission denied`.
 
 ## 4. Ejecución
 
-### 4.1 Termux con VNC (entorno probado)
+### 4.1 JAR
 
-Si ya existe un servidor VNC en `:0`:
-
-```bash
-cd /data/data/com.termux/files/home/proyecto/APKEditor
-
-export DISPLAY=:0
-export XAUTHORITY="$HOME/.Xauthority"
-
-sh gradlew compileJava --offline
-
-java -cp 'build/classes/java/main:build/resources/main:libs/*' \
-  com.reandroid.apkeditor.gui.GUIApplication
-```
-
-Después abre el visor VNC en `localhost:5900` (o el puerto configurado).
-
-Si el servidor no está iniciado, un ejemplo con TigerVNC es:
+El jar de la GUI incluye la app y las clases compartidas/del motor, pero **no** el
+runtime de JavaFX. `guiFatJar` copia los módulos descargados a `build/javafx`;
+añádelos con `--module-path`:
 
 ```bash
-vncserver :0 -geometry 2400x1080 -depth 24
+java --module-path build/javafx --add-modules javafx.controls \
+  -jar build/libs/APKEditor-1.4.9-gui.jar
 ```
 
-### 4.2 Termux con Termux:X11
+### 4.2 Ejecución de desarrollo (glibc Linux)
 
 ```bash
-export DISPLAY=:0
-termux-x11 :0 &
+sh gradlew javafxRun
 ```
 
-Abre la aplicación Termux:X11 y ejecuta la GUI con el mismo comando Java.
+`javafxRun` resuelve los módulos JavaFX de Maven, compila el source set y lanza
+`com.reandroid.apkeditor.javafx.JavaFXApplication` con el module path de JavaFX.
 
-### 4.3 Escritorio Linux
+### 4.3 Termux (proot)
+
+En Termux los binarios de OpenJFX necesitan glibc, así que ejecuta dentro de
+Debian `proot`:
 
 ```bash
-sh gradlew compileJava --offline
-
-java -cp 'build/classes/java/main:build/resources/main:libs/*' \
-  com.reandroid.apkeditor.gui.GUIApplication
+bash proot-run.sh
 ```
 
-### 4.4 Desde el jar de la GUI
+Prueba de humo (arranca Xvfb, imprime `JAVAFX_UI_READY` y cierra):
 
 ```bash
-sh gradlew guiFatJar --offline
-
-java -jar build/libs/APKEditor-1.4.9-gui.jar
+bash proot-run.sh --smoke-test
 ```
 
-El fat jar general también contiene la GUI, pero su entrada por defecto es el CLI:
+Valores por defecto: `JFX_BASE=$HOME/javaFX`, `ROOTFS=$JFX_BASE/debian-trixie`,
+`START_XVFB=1`. Ejecuta `javafxClasses` + `javafxRuntime` (descarga y copia a
+`build/javafx`), monta ese directorio como `/jfx-modules` y usa
+`--module-path /jfx-modules`. Sobrescríbelos con variables de entorno y usa
+`SKIP_BUILD=1` para omitir la compilación de Gradle.
+
+Para un display ya existente (VNC/Termux:X11):
 
 ```bash
-sh gradlew fatJar --offline
-
-java -cp build/libs/APKEditor-1.4.9-all.jar \
-  com.reandroid.apkeditor.gui.GUIApplication
+START_XVFB=0 DISPLAY_NUM=:0 bash proot-run.sh
 ```
 
-> Importante: `sh gradlew run` ejecuta el **CLI** (`com.reandroid.apkeditor.Main`), no la GUI. Usa `guiFatJar` y `java -jar build/libs/APKEditor-1.4.9-gui.jar` para abrir la interfaz.
+### 4.4 Prueba de humo en glibc
 
-## 5. Estructura de la ventana
+```bash
+sh gradlew javafxSmoke
+```
 
-La ventana principal es `MainWindow`:
+## 5. Punto de entrada y arquitectura
 
 ```text
-+------------------------------------------------------------------+
-| Topbar: marca | selector de APK | tema | idioma | minimizar/maximizar/cerrar |
-+------------+-----------------------------------------------------+
-| Sidebar    | Área de contenido                                   |
-| 236 px     | Panel / Workspace / Operaciones / Información       |
-|            | Configuración                                       |
-+------------+-----------------------------------------------------+
-| Barra de estado: sistema, memoria y estado de la operación        |
-+------------------------------------------------------------------+
+JavaFXApplication
+  -> MainView (shell, rutas, tema, idioma)
+       -> DashboardFxView
+       -> WorkspaceFxView  (estructura/código/manifiesto/recursos/análisis)
+       -> OperationFxView  (build/merge/refactor/protect)
+       -> InformationFxView
+       -> SettingsFxView
 ```
 
-- Tamaño mínimo: `1200 x 800`.
-- Tamaño inicial: hasta `1536 x 1024`, ajustado al tamaño de pantalla.
-- Topbar: `74 px`.
-- Sidebar: `236 px`.
-- Barra de estado: `48 px`.
-- La ventana no usa decoración del sistema; se arrastra desde la topbar y se maximiza con doble clic o con el botón correspondiente.
+- `MainView` construye la barra superior, la sidebar, el área de contenido y la barra de estado. Cachea las vistas por ruta y las reconstruye al cambiar de idioma.
+- La UI reutiliza código compartido de `src/main`:
+  - `gui.model.AppState`: APK actual, análisis, árbol, tema, idioma, ruta y estado ocupado.
+  - `gui.service.ApkService`: analiza APKs fuera del hilo de UI.
+  - `gui.service.OperationService`: ejecuta operaciones del motor en segundo plano.
+  - `gui.service.LogService`: entradas y niveles de log.
+  - `gui.i18n.I18n`: cadenas de la UI.
+  - `gui.navigation.Route`: identificadores de ruta.
+  - `operations.OperationCatalog` / `core.OperationRegistry`: operaciones.
+- Los servicios siguen publicando callbacks mediante `SwingUtilities.invokeLater` (EDT de AWT). Envuelve cada actualización JavaFX con `Fx.run(...)` (`Platform.runLater`).
 
-## 6. Navegación
+Las vistas no deben llamar a `Decompiler`, `Builder`, `Protector` ni a otras
+clases del motor directamente. Todo el trabajo pasa por `OperationService`.
 
-| Elemento del sidebar | Ruta | Destino |
+## 6. Distribución de la ventana
+
+### Barra superior
+
+- Marca: logo con degradado y subtítulo `FUTURISTIC`.
+- Chip del APK: nombre del archivo, tooltip con la ruta y acción para cambiar de archivo. Abre el selector.
+- Selector de tema y de idioma.
+- Controles de ventana (minimizar/maximizar/cerrar).
+
+### Sidebar
+
+- **WORKSPACE**: Dashboard, Decompile, Analyze, Smali Viewer.
+- **OPERATIONS**: Build, Merge, Refactor, Protect.
+- **SYSTEM**: Information, Settings.
+- Tarjeta de resumen del motor al pie.
+- La ruta activa recibe la clase de estilo `active`.
+
+### Contenido
+
+Región desplazable con la vista seleccionada. Aquí viven las tarjetas, las
+cabeceras de sección y los layouts de dos columnas (explorador + editor,
+información + estadísticas).
+
+### Barra de estado
+
+- Uso de memoria y texto de estado del motor.
+- Las operaciones en curso cambian el estado a `Processing...` (color warning).
+
+## 7. Rutas
+
+| Ruta | Vista | Descripción |
 | --- | --- | --- |
-| Panel | `DASHBOARD` | Panel de control, estado y accesos rápidos |
-| Descompilar | `DECOMPILE` | Workspace en la pestaña Estructura |
-| Analizar | `ANALYZE` | Workspace en la pestaña Análisis |
-| Visor Smali | `SMALI_VIEWER` | Workspace en la pestaña Código |
-| Construir | `BUILD` | Vista de operación Build |
-| Fusionar | `MERGE` | Vista de operación Merge |
-| Refactorizar | `REFACTOR` | Vista de operación Refactor |
-| Proteger | `PROTECT` | Vista de operación Protect |
-| Información | `INFORMATION` | Detalle técnico del APK |
-| Configuración | `SETTINGS` | Temas, idioma, rutas, motor y atajos |
+| `DASHBOARD` | `DashboardFxView` | Tarjetas de resumen, resumen del APK y accesos rápidos. |
+| `DECOMPILE` (`DECODE`) | `WorkspaceFxView` | Workspace principal con cabecera de descompilación y árbol. |
+| `ANALYZE` | `WorkspaceFxView` | Workspace con la pestaña de análisis activa. |
+| `SMALI_VIEWER` | `WorkspaceFxView` | Workspace con la pestaña de código activa. |
+| `BUILD` | `OperationFxView` | Formulario y ejecución de build. |
+| `MERGE` | `OperationFxView` | Formulario y ejecución de merge. |
+| `REFACTOR` | `OperationFxView` | Formulario y ejecución de refactor. |
+| `PROTECT` | `OperationFxView` | Formulario y ejecución de protect. |
+| `INFORMATION` | `InformationFxView` | Información de la aplicación y estadísticas. |
+| `SETTINGS` | `SettingsFxView` | Tema, idioma e información del runtime. |
 
-La ruta `DECODE` existe como alias y se redirige a `DECOMPILE`. La ruta `LOGS` existe en el enum, pero los logs se muestran integrados en el workspace y en las vistas de operación.
+`LOGS` existe en el enum compartido pero no es una ruta de la sidebar; el log está embebido en el workspace.
 
-## 7. Workspace
+## 8. Workspace
 
-El workspace (`DecompileView`) es el área principal de trabajo.
+`WorkspaceFxView` contiene:
 
-### 7.1 Encabezado
+1. **Cabecera**: título, subtítulo, búsqueda, reset y acción **Decompile**.
+2. **Tarjeta explorador**: campo de filtro y árbol perezoso. Los iconos y colores dependen del tipo (Smali, XML, recurso, binario).
+3. **Tarjeta editor**: editor con pestañas (`TabPane`), buscar siguiente, copiar y ocultar/mostrar gutter.
+4. **Panel de log**: hora, icono de nivel y mensaje.
+5. **Panel de progreso**: porcentaje, barra y lista de pasos.
+6. **Tarjetas inferiores**: `ApplicationInfoCard` y `StatisticsCard`.
 
-- Título y subtítulo con el APK activo.
-- Botón de búsqueda de archivos.
-- Botón para restablecer el espacio de trabajo.
-- Botón **Descompilar**.
-- Pestañas de trabajo: **Estructura**, **Código**, **Manifest**, **Recursos** y **Análisis**.
+Pestañas del workspace:
 
-Las pestañas son vistas del mismo workspace, no rutas independientes:
+- **Structure**: árbol de paquetes.
+- **Code**: editor con el Smali/XML/texto seleccionado.
+- **Manifest**: contenido de AndroidManifest.
+- **Resources**: explorador de recursos.
+- **Analysis**: resumen de aplicación/estadísticas.
 
-- **Estructura**: muestra el árbol y enfoca el explorador.
-- **Código**: abre el editor y enfoca el documento activo.
-- **Manifest**: abre `AndroidManifest.xml`.
-- **Recursos**: intenta abrir `strings.xml`; si no existe, abre `resources.arsc`.
-- **Análisis**: genera y abre un reporte de texto con los datos de `ApkAnalysis`.
+Límites (no los subas en silencio):
 
-### 7.2 Paneles
+- Las entradas ZIP leídas están limitadas a **2 MB**.
+- El árbol está limitado a **6000** entradas.
+- El volcado hexadecimal muestra **4096** bytes.
+- Los AAB se pueden seleccionar, pero el soporte real depende del motor.
 
-El workspace usa `JSplitPane` anidados:
+## 9. Editor
 
-```text
-+----------------+---------------------------+------------------+
-| Explorador     | Editor de código          | Panel de log     |
-| Árbol APK      | Pestañas de documentos    | Eventos          |
-+----------------+---------------------------+------------------+
-| Dock inferior: progreso | información | estadísticas         |
-+---------------------------------------------------------------+
-```
+`com.reandroid.apkeditor.javafx.CodeEditor` es un `TextArea` editable más un
+gutter de números de línea de sólo lectura.
 
-- El ancho de los divisores es de `14 px`.
-- Los paneles conservan proporciones y mínimos al redimensionar:
-  - Explorador: mínimo `240 px`.
-  - Editor: mínimo `360 px`.
-  - Log: mínimo `260 px`.
-- El dock inferior mide `175 px`.
+- El gutter se desplaza con el texto mediante un listener (no un binding).
+- Línea de estado: `Ln/Col`, espacios, codificación (`UTF-8`) e idioma.
+- `toggleGutter()` oculta/muestra el gutter.
+- Sin resaltado de sintaxis.
+- Las ediciones son **sólo en memoria**; guardar de vuelta al APK/proyecto no está implementado.
 
-### 7.3 Explorador de archivos
+## 10. Temas
 
-- Árbol con iconos por tipo: Smali, XML, DEX, recursos, imágenes, librerías, manifest, assets, carpetas y archivos.
-- Búsqueda incremental por nombre.
-- Expansión con un solo clic.
-- Al seleccionar un archivo se abre en el editor.
-- Se conservan las rutas expandidas al filtrar.
-- El árbol se limita a 6000 entradas para mantener la interfaz fluida.
+`FxTheme.NAMES`:
 
-### 7.4 Editor
+| Tema | Carácter |
+| --- | --- |
+| `Futuristic` | Fondo azul profundo, primario cian, acentos púrpura (por defecto). |
+| `Cyberpunk` | Fondo púrpura, primario magenta, acentos cian. |
+| `Dark` | Gris oscuro neutro, primario azul cielo. |
+| `Midnight` | Azul muy oscuro, acentos azul suave. |
 
-El editor (`CodeEditor` + `EditorTabs`) incluye:
+`src/javafx/resources/styles/app.css` es una **plantilla**. Usa tokens como
+`-fx-apx-bg`, `-fx-apx-surface`, `-fx-apx-primary`, `-fx-apx-border`,
+`-fx-apx-text`, etc. `FxTheme.renderCss(name, template)` los sustituye por la
+paleta y `MainView` inyecta el resultado como hoja de estilos
+`data:text/css;base64,...`.
 
-- Una pestaña por archivo abierto.
-- Numeración de líneas.
-- Resaltado de línea actual.
-- Resaltado de sintaxis para Smali, XML, JSON, Java y texto.
-- Estado con `Ln`, `Col`, espacios, codificación y lenguaje.
-- Búsqueda dentro del archivo.
-- Ir a línea.
-- Copiar selección.
-- Cierre de pestañas desde la pestaña o desde el menú del editor.
-- Vista hexadecimal para archivos binarios.
+Usa `derive(<color>, <pct>)` en la plantilla para glows y variantes translúcidas,
+de modo que los cuatro temas sigan siendo coherentes.
 
-Límites de lectura:
+## 11. Idioma
 
-- Lectura de archivos desde ZIP: hasta 2 MB por entrada.
-- Volcado hexadecimal visible: primeros 4096 bytes.
+- Idioma por defecto: **español**.
+- Cadenas: `src/main/resources/i18n/messages.properties` (inglés) y
+  `messages_es.properties` (español).
+- Cada clave debe existir en ambos archivos; `I18n` devuelve la clave cruda si falta.
+- El selector de la barra superior actualiza `AppState`; `MainView` limpia cachés y reconstruye.
 
-> En esta versión los cambios del editor viven en memoria. Todavía no se escriben de vuelta al APK ni al proyecto descompilado.
+## 12. Iconos
 
-## 8. Carga y análisis de APK
+`com.reandroid.apkeditor.javafx.Icons` guarda trazos SVG (sin assets de imagen):
 
-Desde la topbar:
+- `Icons.node(name, size, styleClass)` para iconos normales.
+- `Icons.holder(...)` para iconos contenidos/apilados.
+- `Icons.logo(...)` para la marca con degradado.
+- Se usan en la sidebar, pestañas, tarjetas, árbol, niveles de log y pasos de progreso.
 
-1. Pulsa el selector de APK o usa `Ctrl+O`.
-2. Elige un archivo `.apk`, `.zip` o `.aab`. El selector permite los tres formatos; el soporte real de AAB depende de las capacidades del motor.
-3. `ApkService.analyze()` se ejecuta en segundo plano.
-4. Se actualizan:
-   - `AppState.currentInput`
-   - `AppState.analysis`
-   - `AppState.currentTree`
-5. Se muestran los mensajes del análisis en el panel de log.
-6. La interfaz navega al workspace.
-
-`ApkService` puede analizar APKs, ZIPs y directorios descompilados. La lectura del manifest y el conteo de clases usan ARSCLib y el lector DEX del motor.
-
-## 9. Operaciones del motor
-
-Las operaciones se registran en `OperationCatalog` y se ejecutan a través de `OperationService`.
-
-| Operación | ID | Entrada | Salida |
-| --- | --- | --- | --- |
-| Descompilar | `decode` | APK | Directorio de proyecto |
-| Build | `build` | Directorio descompilado | APK |
-| Merge | `merge` | APK | APK fusionado |
-| Refactor | `refactor` | APK | APK refactorizado |
-| Protect | `protect` | APK | APK protegido |
-| Info | `info` | APK | Información del paquete |
-
-`Info` está registrada en el catálogo para el motor; la vista **Información** del sidebar muestra los datos obtenidos durante el análisis del APK.
-
-En la interfaz, Build/Merge/Refactor/Protect comparten `OperationView`. Cada vista permite:
-
-- Escribir o elegir la entrada.
-- Escribir o elegir la salida.
-- Ejecutar la operación.
-- Restablecer el formulario.
-- Ver progreso, log y estado al finalizar.
-
-La descompilación se inicia desde el workspace:
-
-- Si no hay APK seleccionado, se abre el selector.
-- La salida se genera automáticamente como `<nombre>_decompile`, añadiendo un índice si ya existe.
-- Al terminar correctamente, la ruta de salida se guarda en `AppState.currentOutput`.
-
-`OperationService` ejecuta el motor en un hilo secundario y publica los cambios en el EDT. La UI nunca llama directamente a `Decompiler`, `Builder`, `Protector`, etc.
-
-## 10. Atajos de teclado
-
-Atajos implementados:
+## 13. Atajos
 
 | Atajo | Acción |
 | --- | --- |
-| `F5` | Ir al workspace e iniciar descompilación |
-| `Ctrl+O` | Seleccionar APK |
-| `Ctrl+1` | Volver al workspace |
-| `Ctrl+,` | Abrir Configuración |
-| `Ctrl+F` | Buscar en el archivo activo |
-| `Ctrl+G` | Ir a una línea del editor |
-| `Esc` | Cerrar la búsqueda del editor |
+| `Ctrl+O` | Abrir APK/ZIP. |
+| `F5` | Ir a Decompile y ejecutar decode. |
+| `Ctrl+1` | Ir a Decompile. |
+| `Ctrl+,` | Abrir Settings. |
 
-La tarjeta de Configuración también muestra `Ctrl+S` y `Ctrl+W`; en esta versión aparecen como referencia, pero todavía no están enlazados a acciones.
+## 14. Operaciones
 
-## 11. Temas y estilos
+Las operaciones se registran una vez en `operations/OperationCatalog.java`:
 
-Temas disponibles:
+| ID | Nombre | Opciones |
+| --- | --- | --- |
+| `decode` | Decode APK | `DecompileOptions` |
+| `build` | Build APK | `BuildOptions` |
+| `merge` | Merge APK | `MergerOptions` |
+| `refactor` | Refactor | `RefactorOptions` |
+| `protect` | Protect | `ProtectorOptions` |
+| `info` | APK Info | `InfoOptions` |
 
-| Tema | Característica |
-| --- | --- |
-| `Futuristic` | Tema por defecto, azul neón sobre fondo oscuro |
-| `Cyberpunk` | Morado/rosa neón |
-| `Dark` | Gris azulado sobrio |
-| `Midnight` | Azul profundo |
+`OperationFxView` construye el formulario para el ID seleccionado, resuelve las
+rutas de entrada/salida y delega la ejecución en `OperationService`. Los pasos de
+progreso son `Preparing -> Running -> Finishing`; los logs y errores se añaden al
+`LogService` compartido.
 
-Se pueden cambiar desde:
+## 15. Limitaciones
 
-- El selector de tema de la topbar.
-- La tarjeta **Apariencia** de Configuración.
+- Las ediciones del editor son sólo en memoria.
+- El tema, el idioma y la sesión no persisten entre reinicios.
+- Sin resaltado de sintaxis.
+- Límites de ZIP/árbol/hex indicados en la sección 8.
+- El soporte de AAB depende del motor.
+- No hay framework de tests; verifica con `javafxClasses`, `guiFatJar`,
+  `javafxSmoke` o `bash proot-run.sh --smoke-test`.
 
-Al cambiar el tema, `MainWindow` reconstruye la interfaz y conserva los archivos abiertos mediante `AppState`. El tema no se guarda entre reinicios.
+## 16. Solución de problemas
 
-### 11.1 Idioma
-
-La interfaz admite español e inglés:
-
-- Idioma por defecto: español.
-- Selector en la topbar, junto al tema.
-- Selector en la tarjeta **Apariencia** de Configuración.
-- Al cambiar el idioma, `MainWindow` reconstruye la interfaz y conserva la ruta actual y los archivos abiertos mediante `AppState`.
-- Las traducciones viven en `src/main/resources/i18n/messages.properties` (inglés base) y `messages_es.properties` (español).
-- `I18n` centraliza las traducciones y devuelve la clave si falta un texto.
-- El idioma no se guarda entre reinicios.
-
-Paleta principal de `Futuristic`:
-
-| Uso | Color |
-| --- | --- |
-| Fondo | `#020B18` |
-| Fondo secundario | `#041426` |
-| Superficie | `#06182A` |
-| Borde | `#123653` |
-| Primario | `#00BFFF` |
-| Primario brillante | `#00D5FF` |
-| Éxito | `#00E6A0` |
-| Advertencia | `#FFB547` |
-| Error | `#FF4668` |
-| Texto | `#E6F4FF` |
-| Texto secundario | `#9CB4CC` |
-| Texto atenuado | `#64829F` |
-
-Tipografías:
-
-- Inter, Segoe UI o SansSerif.
-- JetBrains Mono, Cascadia Code, Fira Code, Source Code Pro, Consolas o Monospaced.
-
-Los iconos se dibujan con Java2D mediante `IconFactory`; no se usan imágenes estáticas para los componentes.
-
-## 12. Arquitectura
-
-### 12.1 Paquetes
-
-| Paquete | Responsabilidad |
-| --- | --- |
-| `gui` | `GUIApplication` y `MainWindow` |
-| `gui.view` | Dashboard, workspace, operaciones, información y configuración |
-| `gui.panel` | Paneles reutilizables de progreso, información, estadísticas y estado |
-| `gui.components` | Botones, tarjetas, campos, barras y controles visuales |
-| `gui.editor` | Editor, pestañas, numeración y resaltado Smali |
-| `gui.tree` | Explorador de archivos |
-| `gui.log` | Panel de logs |
-| `gui.model` | Estado compartido y modelos de la UI |
-| `gui.service` | Análisis APK, logs y ejecución de operaciones |
-| `gui.i18n` | Traducciones español/inglés y cambio de idioma |
-| `gui.theme` | Colores, fuentes, iconos y temas |
-| `gui.navigation` | Rutas y navegación |
-| `core` | Contratos y adaptadores del motor |
-| `operations` | Registro central de operaciones existentes |
-
-### 12.2 Flujo de datos
-
-```text
-Usuario
-   |
-   v
-Vista / componente
-   |
-   +--> AppState (estado compartido)
-   |
-   +--> OperationService
-             |
-             v
-       OperationRegistry
-             |
-             v
-       LegacyOptionsOperation
-             |
-             v
-          Motor APKEditor
-             |
-             +--> OperationListener
-             +--> ExecutionContext
-             +--> LogService
-                        |
-                        v
-                     LogPanel
-```
-
-### 12.3 Reglas de diseño
-
-- Las vistas no crean ni ejecutan operaciones del motor directamente.
-- `AppState` no contiene lógica de descompilación.
-- `OperationService` encapsula el trabajo en segundo plano.
-- `LogService` es el bus de mensajes de la interfaz.
-- Las actualizaciones de UI se publican en el EDT con `SwingUtilities.invokeLater`.
-- Los listeners se eliminan en `removeNotify()` para evitar fugas.
-
-## 13. Logs y diagnóstico
-
-`LogService` es un singleton con:
-
-- Niveles: `INFO`, `SUCCESS`, `WARNING`, `ERROR`, `COMMAND`, `DEBUG`.
-- Timestamps.
-- Autoscroll.
-- Limpieza del panel.
-- Exportación a archivo de texto.
-
-El panel de log aparece:
-
-- En el workspace.
-- En cada vista de operación.
-
-Para diagnosticar un fallo:
-
-1. Revisa el panel de log.
-2. Exporta el log con el botón **Exportar**.
-3. Verifica la ruta de entrada y salida.
-4. Comprueba que el APK/proyecto existe y es legible.
-5. Si el error viene del motor, revisa el mensaje completo en el log.
-
-## 14. Solución de problemas
-
-### `No X11 DISPLAY variable was set`
-
-No hay servidor gráfico o falta exportar el display:
-
-```bash
-export DISPLAY=:0
-```
-
-Verifica que el servidor esté activo:
-
-```bash
-pgrep -af Xvnc
-```
-
-### La GUI no aparece en Termux
-
-- Confirma que el visor VNC está conectado.
-- Comprueba `echo $DISPLAY`.
-- Prueba `xrandr -display :0` para verificar que el servidor responde.
-- Revisa la salida de Java en la terminal.
-
-### `permission denied: ./gradlew`
-
-Usa:
-
-```bash
-sh gradlew compileJava --offline
-```
-
-### `Could not find or load main class ...GUIApplication`
-
-- Compila primero con `sh gradlew compileJava --offline`.
-- Ejecuta desde la raíz del proyecto.
-- Mantén las comillas en el classpath:
-
-```bash
-java -cp 'build/classes/java/main:build/resources/main:libs/*' \
-  com.reandroid.apkeditor.gui.GUIApplication
-```
-
-### `sh gradlew run` abre la consola
-
-Es el comportamiento esperado: el `mainClass` del proyecto es el CLI. Usa el comando de GUI indicado en este documento.
-
-### El APK no se puede analizar
-
-- Verifica que el archivo exista y sea legible.
-- Revisa el log para ver si falló el manifest, el DEX o el ZIP.
-- Algunos APKs protegidos o corruptos pueden fallar en el motor.
-- El árbol se limita a 6000 entradas y la lectura de entradas ZIP a 2 MB.
-
-### La ventana es demasiado pequeña
-
-La ventana tiene un mínimo de `1200 x 800`. Si la pantalla es menor, aumenta la resolución del servidor X/VNC o usa una pantalla externa.
-
-## 15. Estado y limitaciones actuales
-
-Implementado:
-
-- Ventana principal, topbar, sidebar, rutas y barra de estado.
-- Dashboard, workspace, información y configuración.
-- Temas en caliente.
-- Cambio de idioma español/inglés en caliente.
-- Carga y análisis de APK.
-- Árbol de archivos y búsqueda.
-- Editor con resaltado, numeración, búsqueda e ir a línea.
-- Descompilación y operaciones Build/Merge/Refactor/Protect.
-- Logs con exportación.
-- Progreso simulado mientras el motor reporta avance.
-
-Pendiente o limitado:
-
-- Guardar los cambios del editor en el APK o proyecto.
-- Atajos `Ctrl+S` y `Ctrl+W`.
-- Persistencia del tema, del idioma y de la sesión entre reinicios.
-- Formularios avanzados con todas las opciones específicas del motor.
-- Ruta dedicada de logs en el sidebar.
-- Pruebas automatizadas de la interfaz.
-
-## 16. Referencias
-
-- [README del proyecto](../README.md)
-- [Referencia visual](../.img/ui_last.png)
-- [Repositorio APKEditor](https://github.com/REAndroid/APKEditor)
-- `build.gradle`: dependencias, versión y tareas `fatJar` / `guiFatJar`
-- `src/main/java/com/reandroid/apkeditor/gui/`: implementación de la interfaz
-- `src/main/java/com/reandroid/apkeditor/core/`: contratos del motor
-- `src/main/java/com/reandroid/apkeditor/operations/OperationCatalog.java`: registro de operaciones
+- **Falla la resolución de JavaFX**: ejecuta `sh gradlew javafxRuntime` con red
+  una vez; después puedes usar `--offline`.
+- **`Permission denied` en `./gradlew`**: usa `sh gradlew`.
+- **`Unable to open DISPLAY`**: arranca Xvfb/VNC o usa `bash proot-run.sh`.
+- **`guiFatJar` compila pero el jar no arranca**: añade
+  `--module-path build/javafx --add-modules javafx.controls`.
